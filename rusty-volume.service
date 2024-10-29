@@ -1,0 +1,12 @@
+[Unit]
+Description=Rusty Volume Service
+After=network.target
+
+[Service]
+ExecStart=/home/pi/rusty-volume
+Restart=on-failure
+User=pi
+WorkingDirectory=/home/pi
+
+[Install]
+WantedBy=multi-user.target

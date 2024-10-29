@@ -112,4 +112,7 @@ impl RotaryController {
         }
         self.waiting = false;
     }
+    pub fn get_value(&mut self) -> i32 {
+        return self.value;
+    }
 }
