@@ -10,7 +10,7 @@ use linux_embedded_hal::I2cdev;
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 use std::error::Error;
 
-const DISPLAY_INTERVAL: Duration = Duration::from_millis(100);
+const DISPLAY_INTERVAL: Duration = Duration::from_millis(1000);
 
 pub struct DisplayUpdater {
     volume: i32,

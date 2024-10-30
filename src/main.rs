@@ -1,6 +1,8 @@
+mod amixer_updater;
 mod display_updater;
 mod rotary_controller;
 
+use amixer_updater::AmixerUpdater;
 use display_updater::DisplayUpdater;
 
 use rotary_controller::RotaryController;
@@ -14,6 +16,7 @@ const CLK_PIN: u8 = 17; // GPIO pin for CLK
 const DT_PIN: u8 = 27; // GPIO pin for DT
 
 const INITIAL_VOLUME: i32 = 50;
+const SOUND_CONTROL: &str = "PCM";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let gpio = Gpio::new().expect("Failed to access GPIO");
@@ -22,12 +25,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Volume control starting...");
     let mut display_updater = DisplayUpdater::new(INITIAL_VOLUME)?;
+    let mut amixer_updater = AmixerUpdater::new(Some(SOUND_CONTROL.to_string()), INITIAL_VOLUME)?;
 
     // Thread for handling volume control logic and wake/sleep behavior
     thread::spawn(move || loop {
         if volume_controller.handle_sleep() {
             volume_controller.update_volume();
             let _ = display_updater.update(volume_controller.get_value());
+            let _ = amixer_updater.update(volume_controller.get_value());
         }
     });
 
