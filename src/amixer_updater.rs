@@ -1,10 +1,10 @@
 use std::{
     error::Error,
-    process::Command,
     time::{Duration, Instant},
 };
+use tokio::process::Command;
 
-const AMIXER_INTERVAL: Duration = Duration::from_millis(1000);
+const AMIXER_INTERVAL: Duration = Duration::from_millis(250);
 
 pub struct AmixerUpdater {
     control: String,
@@ -22,19 +22,26 @@ impl AmixerUpdater {
         })
     }
 
-    pub fn update(&mut self, volume: i32) -> Result<(), Box<dyn Error>> {
+    /// Asynchronously updates the volume using amixer command.
+    pub async fn update(&mut self, volume: i32) -> Result<(), Box<dyn Error>> {
         if volume == self.volume {
             return Ok(());
         }
+
         if self.last_update.elapsed() < AMIXER_INTERVAL {
             return Ok(());
         }
 
+        // Asynchronously run the `amixer` command
         Command::new("amixer")
             .args(&["set", &self.control, &format!("{}%", volume)])
-            .output()?;
+            .output()
+            .await?;
+
+        // Update the internal state
         self.volume = volume;
         self.last_update = Instant::now();
+
         Ok(())
     }
 }

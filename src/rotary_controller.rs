@@ -49,10 +49,11 @@ impl RotaryController {
             waiting: false,
         }
     }
-    /// Checks if the controller should enter sleep mode and handles waking.
+    /// Blocks if in sleep mode. Checks if the controller should enter sleep mode and handles waking.
     pub fn handle_sleep(&mut self) -> bool {
         if self.last_activity.elapsed() >= SLEEP_DELAY {
             println!("Volume control going to sleep");
+            //Blocks until next activity on the CLK pin
             if self.clk_pin.poll_interrupt(true, None).is_ok() {
                 self.last_activity = Instant::now();
                 println!("Wake up volume control");
@@ -62,10 +63,11 @@ impl RotaryController {
         }
         true
     }
-
-    /// Updates the volume based on rotary encoder input.
-    pub fn update_volume(&mut self) {
+    /// Updates the volume if encoder activity has been detected.
+    /// Returns `Some(new_value)` if the volume was updated, otherwise `None`.
+    pub fn update_volume(&mut self) -> Option<i32> {
         if self.clk_detected() {
+            // Activity detected. Update value and prepare to wait for next activity.
             if !self.dt_pin.is_high() {
                 self.value = (self.value + 1).min(self.max_value);
             } else {
@@ -74,9 +76,16 @@ impl RotaryController {
             println!("{}: {} ", self.name, self.value);
             self.wait_for_reset();
             self.last_activity = Instant::now();
+
+            // Return the new value if it was updated
+            return Some(self.value);
         }
+
+        // Return None if no update was made
+        None
     }
 
+    /// Detects valid encoder activity.
     fn clk_detected(&mut self) -> bool {
         if !self.clk_pin.is_high()
             && self.waiting
@@ -94,7 +103,7 @@ impl RotaryController {
         false
     }
 
-    /// Waits until the CLK pin has stabilized before the next rotation.
+    /// Waits until the CLK pin has stabilized before next activity can be reliably registered.
     fn wait_for_reset(&mut self) {
         self.waiting = false;
         while !self.clk_pin.is_high()
@@ -111,8 +120,5 @@ impl RotaryController {
             }
         }
         self.waiting = false;
-    }
-    pub fn get_value(&mut self) -> i32 {
-        return self.value;
     }
 }

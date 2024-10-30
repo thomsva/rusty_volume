@@ -10,8 +10,7 @@ use linux_embedded_hal::I2cdev;
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 use std::error::Error;
 
-const DISPLAY_INTERVAL: Duration = Duration::from_millis(1000);
-
+const DISPLAY_INTERVAL: Duration = Duration::from_millis(20);
 pub struct DisplayUpdater {
     volume: i32,
     last_update: Instant,
@@ -50,7 +49,8 @@ impl DisplayUpdater {
             return Ok(());
         }
         if self.last_update.elapsed() < DISPLAY_INTERVAL {
-            return Ok(());
+            self.display.clear_buffer();
+            //return Ok(());
         }
 
         let volume_text = format!("Volume: {}", volume);
