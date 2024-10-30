@@ -4,12 +4,17 @@ use std::{
 };
 
 use embedded_graphics::{
-    mono_font::{ascii::FONT_9X18, MonoTextStyle},
+    mono_font::{
+        ascii::{FONT_10X20, FONT_7X14},
+        MonoTextStyle,
+    },
     pixelcolor::BinaryColor,
     prelude::*,
     text::Text,
 };
+
 use linux_embedded_hal::I2cdev;
+use local_ip_address::local_ip;
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 use std::error::Error;
 
@@ -64,19 +69,41 @@ impl DisplayUpdater {
     }
 
     pub fn show_welcome(&mut self) -> Result<(), Box<dyn Error>> {
-        let _ = self.write_to_display(String::from("Starting..."));
-        thread::sleep(Duration::from_secs(2));
+        let ip_address = local_ip().unwrap();
+
+        self.display.clear(BinaryColor::Off).unwrap();
+
+        let text_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
+
+        Text::new("Starting...", Point::new(0, 12), text_style)
+            .draw(&mut self.display)
+            .map_err(|e| format!("Failed to draw text: {:?}", e))?;
+
+        let text_style = MonoTextStyle::new(&FONT_7X14, BinaryColor::On);
+
+        Text::new(&ip_address.to_string(), Point::new(0, 62), text_style)
+            .draw(&mut self.display)
+            .map_err(|e| format!("Failed to draw text: {:?}", e))?;
+        // Flush the display to update it with the new drawing
+        self.display
+            .flush()
+            .map_err(|e| format!("Failed to flush display: {:?}", e))?;
+        self.last_update = Instant::now();
+        thread::sleep(Duration::from_secs(3));
+
         let volume_text = format!("Volume: {}", self.volume);
+
         let _ = self.write_to_display(volume_text);
+
         Ok(())
     }
 
     fn write_to_display(&mut self, volume_text: String) -> Result<(), Box<dyn Error>> {
         self.display.clear(BinaryColor::Off).unwrap();
 
-        let text_style = MonoTextStyle::new(&FONT_9X18, BinaryColor::On);
+        let text_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
 
-        Text::new(&volume_text, Point::new(0, 9), text_style)
+        Text::new(&volume_text, Point::new(0, 12), text_style)
             .draw(&mut self.display)
             .map_err(|e| format!("Failed to draw text: {:?}", e))?;
         // Flush the display to update it with the new drawing
