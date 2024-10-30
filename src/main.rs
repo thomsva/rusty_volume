@@ -44,14 +44,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     loop {
+        // Display updating in main loop.
+        // Volume information is received as mpsc messages from the other thread.
+
+        // Attempt to read all available messages non-blocking.
+        // Keep only latest message if there are many.
         let mut latest_volume = None;
         while let Ok(msg) = rx.try_recv() {
             latest_volume = Some(msg);
         }
 
-        // Process only the latest received volume if there is one
+        // If no new messages were received, block until one arrives
+        if latest_volume.is_none() {
+            latest_volume = Some(rx.recv()?);
+        }
+
+        // Update display with latest volume
         if let Some(vol) = latest_volume {
-            //println!("rx: {}", vol);
             let _ = display_updater.update(vol);
         }
     }
