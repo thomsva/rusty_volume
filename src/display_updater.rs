@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_9X18, MonoTextStyle},
@@ -57,7 +60,14 @@ impl DisplayUpdater {
 
         let _ = self.write_to_display(volume_text);
         self.volume = volume;
-        self.last_update = Instant::now();
+        Ok(())
+    }
+
+    pub fn show_welcome(&mut self) -> Result<(), Box<dyn Error>> {
+        let _ = self.write_to_display(String::from("Starting..."));
+        thread::sleep(Duration::from_secs(2));
+        let volume_text = format!("Volume: {}", self.volume);
+        let _ = self.write_to_display(volume_text);
         Ok(())
     }
 
@@ -73,6 +83,7 @@ impl DisplayUpdater {
         self.display
             .flush()
             .map_err(|e| format!("Failed to flush display: {:?}", e))?;
+        self.last_update = Instant::now();
         Ok(())
     }
 }

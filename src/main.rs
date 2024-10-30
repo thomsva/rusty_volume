@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Volume control starting...");
     let mut display_updater = DisplayUpdater::new(INITIAL_VOLUME)?;
     let mut amixer_updater = AmixerUpdater::new(Some(SOUND_CONTROL.to_string()), INITIAL_VOLUME)?;
+    let _ = display_updater.show_welcome();
 
     // Create a streaming channel to send information to main thread
     let (tx, rx) = channel();
