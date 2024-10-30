@@ -70,7 +70,7 @@ After compiling a folder called target should have appeared under the project fo
 ./target/release/rusty_volume
 ```
 
-## Run rusty_volume as a Systemd service
+## Run as a systemd service
 
 In most use cases it makes sense to have the program run automatically every time the machine is started. This can be done by defining it as a systemd service.
 
@@ -118,8 +118,8 @@ journalctl -u rusty_volume.service -f
 To remove the service, first stop the service, then disable it to prevent it from starting from boot. Then remove the file and restart Systemd. Here are the needed commands.
 
 ```bash
-sudo systemctl stop volume_control.service
-sudo systemctl disable volume_control.service
-sudo rm /etc/systemd/system/volume_control.service
+sudo systemctl stop rusty_volume.service
+sudo systemctl disable rusty_volume.service
+sudo rm /etc/systemd/system/rusty_volume.service
 sudo systemctl daemon-reload
 ```
