@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 set -o errexit
@@ -14,5 +13,6 @@ readonly GLIBC_VERSION=2.36
 
 cargo zigbuild --release --target=${TARGET_ARCH}.${GLIBC_VERSION} --verbose
 #cargo build --release --target=${TARGET_ARCH} --verbose
+
 rsync ${SOURCE_PATH} ${TARGET_HOST}:${TARGET_PATH}
 ssh -t ${TARGET_HOST} ${TARGET_PATH}
