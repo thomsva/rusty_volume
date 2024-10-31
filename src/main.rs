@@ -13,16 +13,18 @@ use rppal::gpio::Gpio;
 use std::error::Error;
 use std::sync::mpsc::channel;
 use std::thread;
+use std::time::{Duration, Instant};
 
 const INITIAL_VOLUME: i32 = 50;
-const SOUND_CONTROL: &str = "PCM";
+const MAIN_LOOP_INTERVAL: Duration = Duration::from_millis(50);
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     match load_config() {
         Ok(config) => {
             println!(
-                "Config loaded - clk: {}, dt: {}",
-                config.clk_pin, config.dt_pin
+                "Config loaded - clk: {}, dt: {} device {}",
+                config.clk_pin, config.dt_pin, config.device
             );
 
             let gpio = Gpio::new().expect("Failed to access GPIO");
@@ -36,8 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             println!("Volume control starting...");
             let mut display_updater = DisplayUpdater::new(INITIAL_VOLUME)?;
-            let mut amixer_updater =
-                AmixerUpdater::new(Some(SOUND_CONTROL.to_string()), INITIAL_VOLUME)?;
+            let mut amixer_updater = AmixerUpdater::new(Some(config.device), INITIAL_VOLUME)?;
             let _ = display_updater.show_welcome();
 
             // Create a streaming channel to send information to main thread
@@ -48,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 if volume_controller.handle_sleep() {
                     if let Some(new_volume) = volume_controller.update_volume() {
                         //display_updater.update(new_volume).unwrap();
-                        let _ = amixer_updater.update(new_volume);
+                        // let _ = amixer_updater.update(new_volume);
                         tx.send(new_volume).unwrap();
                     }
                 }
@@ -60,6 +61,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 // Attempt to read all available messages non-blocking.
                 // Keep only latest message if there are many.
+
+                let main_loop_started = Instant::now();
                 let mut latest_volume = None;
                 while let Ok(msg) = rx.try_recv() {
                     latest_volume = Some(msg);
@@ -73,6 +76,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // Update display with latest volume
                 if let Some(vol) = latest_volume {
                     let _ = display_updater.update(vol);
+                    let _ = amixer_updater.update(vol).await;
+                }
+
+                while main_loop_started.elapsed() < MAIN_LOOP_INTERVAL {
+                    std::thread::sleep(Duration::from_millis(1));
                 }
             }
         }

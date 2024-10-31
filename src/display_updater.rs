@@ -1,7 +1,4 @@
-use std::{
-    thread,
-    time::{Duration, Instant},
-};
+use std::{thread, time::Duration};
 
 use embedded_graphics::{
     mono_font::{
@@ -18,10 +15,8 @@ use local_ip_address::local_ip;
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 use std::error::Error;
 
-const DISPLAY_INTERVAL: Duration = Duration::from_millis(20);
 pub struct DisplayUpdater {
     volume: i32,
-    last_update: Instant,
     display:
         Ssd1306<I2CInterface<I2cdev>, DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
 }
@@ -45,20 +40,12 @@ impl DisplayUpdater {
             .flush()
             .map_err(|e| format!("Failed to flush display: {:?}", e))?;
 
-        Ok(Self {
-            display,
-            volume,
-            last_update: Instant::now(),
-        })
+        Ok(Self { display, volume })
     }
 
     pub fn update(&mut self, volume: i32) -> Result<(), Box<dyn Error>> {
         if volume == self.volume {
             return Ok(());
-        }
-        if self.last_update.elapsed() < DISPLAY_INTERVAL {
-            self.display.clear_buffer();
-            //return Ok(());
         }
 
         let volume_text = format!("Volume: {}", volume);
@@ -88,7 +75,6 @@ impl DisplayUpdater {
         self.display
             .flush()
             .map_err(|e| format!("Failed to flush display: {:?}", e))?;
-        self.last_update = Instant::now();
         thread::sleep(Duration::from_secs(3));
 
         let volume_text = format!("Volume: {}", self.volume);
@@ -110,7 +96,7 @@ impl DisplayUpdater {
         self.display
             .flush()
             .map_err(|e| format!("Failed to flush display: {:?}", e))?;
-        self.last_update = Instant::now();
+
         Ok(())
     }
 }

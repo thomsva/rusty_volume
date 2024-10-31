@@ -8,6 +8,7 @@ use toml::de::from_str;
 pub struct Config {
     pub clk_pin: u8,
     pub dt_pin: u8,
+    pub device: String,
 }
 
 pub fn load_config() -> Result<Config, Box<dyn Error>> {
