@@ -1,0 +1,3 @@
+# rotary encoder gpio pins
+clk_pin = 17
+dt_pin = 27
