@@ -1,8 +1,8 @@
 # Rusty_volume
 
-Rusty_volume is a volume control app used and tested on a Raspberry Pi 4. It uses a rotary encoder to adjust volume and a small OLED display over the I2C interface.
+Rusty_volume is a volume control app used and tested on a Raspberry Pi 4. It uses a rotary encoder to adjust volume and a small OLED display over the I2C interface - a great project to get familiar with the Rust programming language.
 
-As of 30.10.2024 the program is still deemed to be "work in progress" as it has not yet been in real use.
+The program is still in an experimental stage as it has not yet been in real use.
 
 ## Design goal
 
@@ -10,31 +10,32 @@ The main goal with the program is to make the use of the rotary encoder feel as 
 
 ## Implementation
 
-- Interrupts are used to wake the volume control from sleep. Wakeup is instant.
+- Interrupts are used to wake the volume control from sleep.
 - The volume control goes back to sleep after 3 seconds of inactivity.
-- When active, the encoder CLK pin is polled continuously. This uses CPU capacity but when asleep it goes back to almost zero.
+- When active, the encoder CLK pin is polled continuously. This uses a lot of CPU capacity but in sleep mode CPU use is almost zero.
 - Polling of the encoder pin is done in a separate CPU thread to keep it free from interference by other tasks.
-- Other tasks include updating the display and updating the volume of the audio interface. These are done asyncronously when feasible and at suitable update intevals.
+- Other tasks (in different thread) include updating the display and updating the volume of the audio interface. These are done asyncronously when feasible and at suitable update intevals.
 - Updating of the display and audio interface stops when there is nothing to update.
 
 ## Some observations during testing
 
-Debouncing a mechanical rotary encoder was harder than expected. At some points it felt certain that the encoder was defective. There is actual mechanical bouncing but also electrical ringing from capacitance and inductance in the circuit. This can be mitigated by adding resistors and capacitors but it can also be done by programming.
+Debouncing a mechanical rotary encoder was more difficult than expected. At some points it felt certain that the encoder was defective. There is actual mechanical bouncing but also electrical ringing from capacitance and inductance in the circuit. This can be mitigated by adding resistors and capacitors but it can also be done by programming.
 
-- When continously polling the CLK pin and trying to detect a 0,5ms period of continuous observations from the new state, this period has to be restarted usually 5-15 times for each state change as the pin bounces back to the previous state.
-- It seems enough for very high reliability to poll and debounce only one of the pins, and then when debounced check the state of the other pin to detect the rotation direction.
+- When debouncing using a fixed delay from the first activity, the delay has to be set to at least 5-10ms to be reliable. This makes the encoder unreliable when rotating fast.
+- When continously polling the CLK pin and trying to detect a 0,5ms period of continuous observations of the new state, this period has to be restarted usually 5-15 times for each state change as the pin keeps bouncing back to the previous state.
+- It seems enough to poll and debounce only one of the pins, and then when debounced check the state of the other pin to detect the rotation direction.
 - The state of the pins changes and bounces only when the controller has just been moved. Other than that it's very stable.
-- Good results can be achieved by relying more on interrupts instead of continuous polling. However test showed that the controller was slighly more responsive with continuous polling.
-- When polling, one CPU core goes to almost 100% at 1,8Ghz. After some seconds of inactivity it goes back to almost nothing.
+- Good results can be achieved by relying on interrupts instead of continuous polling. However tests done so far showed that the controller was slighly more responsive with continuous polling.
+- One alternative could be to detect the first CLK pin activity by interrupt and then detect the return to it's original state by continuous polling. It appears to be important for performance to establish a reliable starting point, when bouncing has ended and the pin is ready for the next signal.
+- When polling, one CPU core goes to almost 100% at 1,8Ghz. When at sleep after 3 seconds of inactivity CPU use goes back to almost nothing.
 - The rotary encoder can be turned very fast without missing steps but not indefinately fast.
 
 ## Further development
 
 - Test on other hardware
 - Add instructions about connecting the encoder and the OLED display.
-- Make it possible for user to easily change program parameters. Currently changes to the source code is needed to change the used GPIO pins or the debouncing timeouts.
-- Better error handling and other measures for maximum reliability.
-- Continue cleaning up code for readibility and reliability.
+- Better error handling and other measures for reliability.
+- Continue cleaning up code for readibility.
 - Handling the screen updates has room for improvement. It works but could be made simpler, cleaner and better.
 - Add some kind of performance measuring for optimizing the debouncing and comparing different encoders.
 - Add other functionality relevant to RPi based music streaming.
@@ -69,6 +70,8 @@ After compiling a folder called target should have appeared under the project fo
 ```bash
 ./target/release/rusty_volume
 ```
+
+The program will look for a configuration file (config.toml) from the active directory, currently `~/rusty_volume`. By editing this file you can select wich GPIO pins to use for the rotary encoder.
 
 ## Run as a systemd service
 
