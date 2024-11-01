@@ -89,7 +89,7 @@ impl DisplayUpdater {
 
         let text_style = MonoTextStyle::new(&FONT_10X20, BinaryColor::On);
 
-        Text::new(&volume_text, Point::new(0, 12), text_style)
+        Text::new(&volume_text, Point::new(12, 24), text_style)
             .draw(&mut self.display)
             .map_err(|e| format!("Failed to draw text: {:?}", e))?;
         // Flush the display to update it with the new drawing

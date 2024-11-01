@@ -15,7 +15,6 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::time::{Duration, Instant};
 
-const INITIAL_VOLUME: i32 = 50;
 const MAIN_LOOP_INTERVAL: Duration = Duration::from_millis(50);
 
 #[tokio::main]
@@ -23,8 +22,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     match load_config() {
         Ok(config) => {
             println!(
-                "Config loaded - clk: {}, dt: {} device {}",
-                config.clk_pin, config.dt_pin, config.device
+                "Config loaded - clk: {}, dt: {} device {} max_startup_volume {}",
+                config.clk_pin, config.dt_pin, config.device, config.startup_volume
             );
 
             let gpio = Gpio::new().expect("Failed to access GPIO");
@@ -37,9 +36,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
             );
 
             println!("Volume control starting...");
-            let mut display_updater = DisplayUpdater::new(INITIAL_VOLUME)?;
-            let mut amixer_updater = AmixerUpdater::new(Some(config.device), INITIAL_VOLUME)?;
+            let mut display_updater = DisplayUpdater::new(0)?;
+            let mut amixer_updater = AmixerUpdater::new(Some(config.device), 0)?;
             let _ = display_updater.show_welcome();
+
+            let starting_volume = amixer_updater
+                .get_starting_volume(config.startup_volume)
+                .await;
+            volume_controller.value = starting_volume;
+
+            let _ = display_updater.update(starting_volume);
+            amixer_updater.update(starting_volume).await?;
 
             // Create a streaming channel to send information to main thread
             let (tx, rx) = channel();

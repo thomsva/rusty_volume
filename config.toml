@@ -2,3 +2,4 @@
 clk_pin = 17
 dt_pin = 27
 device = "Digital"
+startup_volume = 25 # maximum first volume setting

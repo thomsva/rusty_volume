@@ -9,6 +9,7 @@ pub struct Config {
     pub clk_pin: u8,
     pub dt_pin: u8,
     pub device: String,
+    pub startup_volume: i32,
 }
 
 pub fn load_config() -> Result<Config, Box<dyn Error>> {
@@ -29,6 +30,12 @@ pub fn load_config() -> Result<Config, Box<dyn Error>> {
     if config.dt_pin > 27 {
         return Err(Box::<dyn Error>::from(
             "Invalid dt_pin in config. Valid range (0-27)",
+        ));
+    }
+
+    if config.startup_volume.is_negative() || config.startup_volume > 100 {
+        return Err(Box::<dyn Error>::from(
+            "Invalid max_startup_volume in config. Valid range (0-100)",
         ));
     }
 

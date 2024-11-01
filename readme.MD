@@ -59,19 +59,20 @@ Install Rust. Copy the installation script from [the Rust install page](https://
 To download and build the program:
 
 ```bash
+git clone git@github.com:thomsva/rusty_volume.git
 cd rusty_volume
 cargo build --release
 ```
 
 Downloading everything and compiling takes a couple of minutes.
 
-After compiling a folder called target should have appeared under the project folder. When in the project folder you can now start the program with
+After compiling a folder called target should have appeared under the project folder. When in the project folder the program can be started with
 
 ```bash
 ./target/release/rusty_volume
 ```
 
-The program will look for a configuration file (config.toml) from the active directory, currently `~/rusty_volume`. By editing this file you can select wich GPIO pins to use for the rotary encoder.
+The program will look for a configuration file (config.toml) from the active directory, currently `~/rusty_volume`. By editing this file you can select wich GPIO pins to use for the rotary encoder and the name of the audio device to be controlled.
 
 ## Run as a systemd service
 

@@ -9,7 +9,7 @@ pub struct RotaryController {
     name: String,
     clk_pin: InputPin,
     dt_pin: InputPin,
-    value: i32,
+    pub value: i32,
     min_value: i32,
     max_value: i32,
     last_activity: Instant,
